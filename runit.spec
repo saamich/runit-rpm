@@ -76,7 +76,6 @@ done
 %{_sbindir}/sv
 %{_sbindir}/svlogd
 %{_sbindir}/utmpset
-%{_sbindir}/runsvdir-start
 %dir /etc/service
 
 %changelog
