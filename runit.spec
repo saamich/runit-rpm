@@ -8,7 +8,7 @@
 
 Name:           runit
 Version:        2.1.2
-Release:        1%{?_with_dietlibc:diet}%{?dist}
+Release:        docker%{?_with_dietlibc:diet}%{?dist}
 
 Group:          System/Base
 License:        BSD
@@ -20,10 +20,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
 Url:            http://smarden.org/runit/
 Source0:        http://smarden.org/runit/runit-%{version}.tar.gz
-Source1:        runsvdir-start.service
 Patch:          runit-2.1.2-etc-service.patch
-Patch1:         runit-2.1.2-runsvdir-path-cleanup.patch
-Patch2:         runit-2.1.2-term-hup-option.patch
 
 Obsoletes: runit <= %{version}-%{release}
 Provides: runit = %{version}-%{release}
@@ -57,93 +54,22 @@ echo "%{?_with_dietlibc:diet -Os }%__cc $RPM_OPT_FLAGS" >conf-cc
 echo "%{?_with_dietlibc:diet -Os }%__cc -Os -pipe"      >conf-ld
 popd
 %patch
-%patch1
-%patch2
 
 %build
 sh package/compile
 
 %install
-EXTRA_FILES=$RPM_BUILD_ROOT/extra_files
-touch %{EXTRA_FILES}
-
 for i in $(< package/commands) ; do
     %{__install} -D -m 0755 command/$i %{buildroot}%{_sbindir}/$i
 done
-for i in man/*8 ; do
-    %{__install} -D -m 0755 $i %{buildroot}%{_mandir}/man8/${i##man/}
-done
 %{__install} -d -m 0755 %{buildroot}/etc/service
-%{__install} -D -m 0750 etc/2 %{buildroot}%{_sbindir}/runsvdir-start
-
-# For systemd only
-%if 0%{?rhel} >= 7
-%{__install} -D -p -m 0644 $RPM_SOURCE_DIR/runsvdir-start.service \
-                       $RPM_BUILD_ROOT%{_unitdir}/runsvdir-start.service
-echo %{_unitdir}/runsvdir-start.service > %{EXTRA_FILES}
-%endif
 
 %clean
 %{__rm} -rf %{buildroot}
 
-%post
-if [ $1 = 1 ] ; then
-  %if 0%{?rhel} >= 6 <= 7
-    rpm --queryformat='%%{name}' -qf /sbin/init | grep -q upstart
-    if [ $? -eq 0 ]; then
-      cat >/etc/init/runsvdir.conf <<\EOT
-# for runit - manage /usr/sbin/runsvdir-start
-start on runlevel [2345]
-stop on runlevel [^2345]
-normal exit 0 111
-respawn
-exec /sbin/runsvdir-start
-EOT
-    # tell init to start the new service
-      start runsvdir
-    fi
-  %endif
-
-  %if 0%{?rhel} > 7
-    systemctl start runsvdir-start
-  %endif
-
-  %if 0%{?rhel} < 6
-    grep -q 'RI:2345:respawn:/sbin/runsvdir-start' /etc/inittab
-    if [ $? -eq 1 ]; then
-      echo -n "Installing /sbin/runsvdir-start into /etc/inittab.."
-      echo "RI:2345:respawn:/sbin/runsvdir-start" >> /etc/inittab
-      echo " success."
-      # Reload init
-      telinit q
-    fi
-  %endif
-fi
-
-%preun
-if [ $1 = 0 ]; then
-  if [ -f /etc/init/runsvdir.conf ]; then
-    stop runsvdir
-  fi
-fi
-
-%postun
-if [ $1 = 0 ]; then
-  if [ -f /etc/init/runsvdir.conf ]; then
-    rm -f /etc/init/runsvdir.conf
-  else
-    echo " #################################################"
-    echo " # Remove /sbin/runsvdir-start from /etc/inittab #"
-    echo " # if you really want to remove runit            #"
-    echo " #################################################"
-  fi
-fi
-
-%files -f %{EXTRA_FILES}
+%files
 %defattr(-,root,root,-)
 %{_sbindir}/chpst
-%{_sbindir}/runit
-%{_sbindir}/runit-init
 %{_sbindir}/runsv
 %{_sbindir}/runsvchdir
 %{_sbindir}/runsvdir
@@ -151,12 +77,12 @@ fi
 %{_sbindir}/svlogd
 %{_sbindir}/utmpset
 %{_sbindir}/runsvdir-start
-%{_mandir}/man8/*.8*
-%doc doc/* etc/
-%doc package/CHANGES package/COPYING package/README package/THANKS package/TODO
 %dir /etc/service
 
 %changelog
+* Thu Aug 21 2014 Savinov Artem <asavinov@asdco.ru> 2.1.2-docker
+- Initial release for use in docker with my_init 
+
 * Thu Aug 21 2014 Chris Gaffney <gaffneyc@gmail.com> 2.1.2-1
 - Initial release of 2.1.2
 

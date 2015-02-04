@@ -13,7 +13,7 @@ if [ ! -f "$(which rpmdev-setuptree)" ]; then echo "please install 'rpmdevtools'
 
 cp -f ${whereami}/runit.spec ~/rpmbuild/SPECS/
 cp -f ${whereami}/*.patch    ~/rpmbuild/SOURCES/
-cp -f ${whereami}/runsvdir-start.service    ~/rpmbuild/SOURCES/
+curl http://smarden.org/runit/runit-2.1.2.tar.gz > ~/rpmbuild/SOURCES/runit-2.1.2.tar.gz
 /usr/bin/spectool -C ~/rpmbuild/SOURCES/ -g ${whereami}/runit.spec 
 
 rpmbuild -bb ~/rpmbuild/SPECS/runit.spec
