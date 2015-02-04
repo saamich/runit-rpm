@@ -13,8 +13,8 @@ Release:        docker%{?_with_dietlibc:diet}%{?dist}
 Group:          System/Base
 License:        BSD
 
-# Override _sbindir being /usr/sbin
-%define _sbindir /sbin
+# Fix _bindir
+%define _bindir /usr/bin
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-build
 
@@ -60,22 +60,24 @@ sh package/compile
 
 %install
 for i in $(< package/commands) ; do
-    %{__install} -D -m 0755 command/$i %{buildroot}%{_sbindir}/$i
+    %{__install} -D -m 0755 command/$i %{buildroot}%{_bindir}/$i
 done
 %{__install} -d -m 0755 %{buildroot}/etc/service
+%{__rm} -rf %{buildroot}%{_bindir}/runit-init
+%{__rm} -rf %{buildroot}%{_bindir}/runit
 
 %clean
 %{__rm} -rf %{buildroot}
 
 %files
 %defattr(-,root,root,-)
-%{_sbindir}/chpst
-%{_sbindir}/runsv
-%{_sbindir}/runsvchdir
-%{_sbindir}/runsvdir
-%{_sbindir}/sv
-%{_sbindir}/svlogd
-%{_sbindir}/utmpset
+%{_bindir}/chpst
+%{_bindir}/runsv
+%{_bindir}/runsvchdir
+%{_bindir}/runsvdir
+%{_bindir}/sv
+%{_bindir}/svlogd
+%{_bindir}/utmpset
 %dir /etc/service
 
 %changelog
