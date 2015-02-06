@@ -1,9 +1,6 @@
-# Based on https://github.com/imeyer/runit-rpm
-
-
 # What the?
 
-runit for use in docker container with my_init
+Runit for use in docker container with my_init. Based on https://github.com/imeyer/runit-rpm
 
 ## Building
 
